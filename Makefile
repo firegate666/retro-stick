@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 
-.PHONY: help list-machines validate fetch build flash build-and-flash \
+.PHONY: help list-machines validate \
+        fetch fetch-retroarch fetch-cores fetch-alpine \
+        build-root build flash build-and-flash \
         add-machine clean clean-cache
 
 # ── Help ──────────────────────────────────────────────────────────────────────
@@ -10,7 +12,8 @@ help:
 	@echo ""
 	@echo "  make list-machines               List all configured machines"
 	@echo "  make validate                    Check configs and host tools"
-	@echo "  make fetch                       Download RetroArch and all cores"
+	@echo "  make fetch                       Download RetroArch, cores, and Alpine image"
+	@echo "  make build-root                  Build Alpine rootfs via Docker"
 	@echo "  make build                       Build retrostick.img"
 	@echo "  make flash DEVICE=/dev/sdX       Write image to USB stick"
 	@echo "  make build-and-flash DEVICE=..   Build then flash in one step"
@@ -50,9 +53,21 @@ add-machine:
 
 # ── Fetch ─────────────────────────────────────────────────────────────────────
 
-fetch:
+fetch: fetch-retroarch fetch-cores fetch-alpine
+
+fetch-retroarch:
 	@bash scripts/fetch_retroarch.sh
+
+fetch-cores:
 	@bash scripts/fetch_cores.sh
+
+fetch-alpine:
+	docker pull --platform linux/amd64 alpine:latest
+
+# ── Rootfs ────────────────────────────────────────────────────────────────────
+
+build-root:
+	@bash scripts/build_root.sh
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
@@ -76,4 +91,4 @@ clean:
 	rm -rf build/
 
 clean-cache:
-	rm -rf cache/retroarch cache/cores
+	rm -rf cache/retroarch cache/cores cache/alpine

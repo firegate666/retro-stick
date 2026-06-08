@@ -64,6 +64,7 @@ check_tool() {
     fi
 }
 
+check_tool docker     docker        docker.io
 check_tool curl       curl          curl
 check_tool unzip      unzip         unzip
 # sevenzip (Homebrew) installs 7zz; p7zip (Linux) installs 7z — accept either

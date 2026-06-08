@@ -1,0 +1,61 @@
+#!/bin/sh
+# /etc/local.d/retroarch-launch.start
+# Run by OpenRC local service at every boot.
+#
+# Reads machine= from the kernel cmdline (set by GRUB per menu entry),
+# mounts the RETROGAMES exFAT partition, then launches RetroArch with the
+# base config plus the machine-specific overlay from RETROGAMES.
+#
+# When RetroArch exits (F12 → Quit), the system reboots so GRUB reappears.
+
+set -e
+
+# ── Machine name from kernel cmdline ─────────────────────────────────────────
+
+MACHINE=$(grep -o 'machine=[^ ]*' /proc/cmdline | cut -d= -f2)
+MACHINE=${MACHINE:-c64}
+
+echo "RetroStick: machine=$MACHINE"
+
+# ── Wait briefly for udev to finish settling devices ─────────────────────────
+
+sleep 2
+
+# ── Mount RETROGAMES (exFAT, label set by partition_usb.sh) ──────────────────
+
+mkdir -p /media/RETROGAMES
+
+if ! mountpoint -q /media/RETROGAMES; then
+    mount -t exfat LABEL=RETROGAMES /media/RETROGAMES || {
+        echo "WARNING: could not mount RETROGAMES — saves and disk images unavailable"
+    }
+fi
+
+# ── Ensure per-machine directories exist on RETROGAMES ───────────────────────
+
+for dir in disks saves states system; do
+    mkdir -p "/media/RETROGAMES/machines/$MACHINE/$dir"
+done
+
+# ── Build RetroArch config args ───────────────────────────────────────────────
+
+BASE_CFG=/opt/retroarch/retroarch.cfg
+MACHINE_CFG="/media/RETROGAMES/machines/$MACHINE/machine.cfg"
+
+CONFIG_ARGS="--config $BASE_CFG"
+if [ -f "$MACHINE_CFG" ]; then
+    CONFIG_ARGS="$CONFIG_ARGS --appendconfig $MACHINE_CFG"
+fi
+
+# ── Launch RetroArch on the KMS/DRM framebuffer ───────────────────────────────
+
+export SDL_VIDEODRIVER=kmsdrm
+export HOME="/media/RETROGAMES/machines/$MACHINE"
+
+echo "RetroStick: launching retroarch $CONFIG_ARGS"
+retroarch $CONFIG_ARGS || true
+
+# ── Reboot returns the user to the GRUB machine selector ─────────────────────
+
+echo "RetroStick: RetroArch exited — rebooting to machine selector"
+/sbin/reboot
