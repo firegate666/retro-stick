@@ -70,12 +70,16 @@ check_tool mksquashfs squashfs      squashfs-tools
 check_tool dd         "(built-in)"  "(built-in)"
 check_tool mtools     mtools        mtools
 
-# grub-mkimage is grub2-mkimage on some distros
-if command -v grub-mkimage &>/dev/null || command -v grub2-mkimage &>/dev/null; then
+# grub-mkimage: name varies by platform
+# Linux: grub-mkimage or grub2-mkimage
+# macOS (x86_64-elf-grub): x86_64-elf-grub-mkimage
+if command -v grub-mkimage &>/dev/null \
+   || command -v grub2-mkimage &>/dev/null \
+   || command -v x86_64-elf-grub-mkimage &>/dev/null; then
     ok "grub-mkimage"
 else
     if [[ "$OS" == "Darwin" ]]; then
-        warn "grub-mkimage not found — brew install grub"
+        warn "grub-mkimage not found — brew install x86_64-elf-grub"
     else
         warn "grub-mkimage not found — apt install grub-pc-bin grub-efi-amd64-bin"
     fi
