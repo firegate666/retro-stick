@@ -1,0 +1,7 @@
+# DOS — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/dos/disks/ to be copied to the USB stick.
+# Format: .zip .exe
+#
+# Example (remove the # to enable):
+# Doom (1993).zip

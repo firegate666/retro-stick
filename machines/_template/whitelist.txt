@@ -1,0 +1,6 @@
+# <MACHINE> — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/<MACHINE>/disks/ to be copied to the USB stick.
+#
+# Example (remove the # to enable):
+# My Game (Year).ext

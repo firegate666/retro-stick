@@ -1,0 +1,7 @@
+# Game Boy / Game Boy Color — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/gb/disks/ to be copied to the USB stick.
+# Format: .gb .gbc
+#
+# Example (remove the # to enable):
+# Tetris (1989).gb

@@ -1,0 +1,7 @@
+# Game Boy Advance — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/gba/disks/ to be copied to the USB stick.
+# Format: .gba
+#
+# Example (remove the # to enable):
+# Castlevania - Aria of Sorrow (2003).gba

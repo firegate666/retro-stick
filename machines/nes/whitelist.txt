@@ -1,0 +1,7 @@
+# NES — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/nes/disks/ to be copied to the USB stick.
+# Format: .nes
+#
+# Example (remove the # to enable):
+# Super Mario Bros. (1985).nes

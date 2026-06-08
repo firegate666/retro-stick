@@ -1,0 +1,7 @@
+# Amiga — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/amiga/disks/ to be copied to the USB stick.
+# Format: .adf .hdf .lha
+#
+# Example (remove the # to enable):
+# Sensible Soccer (1992).adf

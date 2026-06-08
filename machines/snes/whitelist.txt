@@ -1,0 +1,7 @@
+# SNES — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/snes/disks/ to be copied to the USB stick.
+# Format: .sfc .smc
+#
+# Example (remove the # to enable):
+# Super Metroid (1994).sfc

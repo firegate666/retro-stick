@@ -1,0 +1,7 @@
+# Commodore 64 — approved disk images
+# One filename per line. Lines starting with # are ignored.
+# Images must exist in machines/c64/disks/ to be copied to the USB stick.
+# Format: .d64 .t64 .tap .prg
+#
+# Example (remove the # to enable):
+# Impossible Mission (1983).d64
