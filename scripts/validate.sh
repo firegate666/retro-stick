@@ -66,6 +66,16 @@ check_tool() {
 
 check_tool curl       curl          curl
 check_tool unzip      unzip         unzip
+# sevenzip (Homebrew) installs 7zz; p7zip (Linux) installs 7z — accept either
+if command -v 7zz &>/dev/null || command -v 7z &>/dev/null; then
+    ok "7z / 7zz ($(command -v 7zz 2>/dev/null || command -v 7z))"
+else
+    if [[ "$OS" == "Darwin" ]]; then
+        warn "7z not found — brew install sevenzip"
+    else
+        warn "7z not found — apt install p7zip-full"
+    fi
+fi
 check_tool mksquashfs squashfs      squashfs-tools
 check_tool dd         "(built-in)"  "(built-in)"
 check_tool mtools     mtools        mtools
