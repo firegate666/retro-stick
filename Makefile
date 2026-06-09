@@ -3,6 +3,7 @@ SHELL := /bin/bash
 .PHONY: help list-machines validate \
         fetch fetch-retroarch fetch-cores fetch-alpine \
         build-root build flash build-and-flash \
+        qemu-bios qemu-efi \
         add-machine clean clean-cache
 
 # ── Help ──────────────────────────────────────────────────────────────────────
@@ -18,6 +19,8 @@ help:
 	@echo "  make flash DEVICE=/dev/sdX       Write image to USB stick"
 	@echo "  make build-and-flash DEVICE=..   Build then flash in one step"
 	@echo "  make add-machine NAME=<name>     Scaffold a new machine from _template"
+	@echo "  make qemu-bios                   Boot retrostick.img in QEMU (legacy BIOS)"
+	@echo "  make qemu-efi                    Boot retrostick.img in QEMU (UEFI via EDK2)"
 	@echo "  make clean                       Remove build/ artifacts"
 	@echo "  make clean-cache                 Remove downloaded binaries from cache/"
 
@@ -84,6 +87,38 @@ build-and-flash:
 	@test -n "$(DEVICE)" || { echo "Usage: make build-and-flash DEVICE=/dev/sdX"; exit 1; }
 	@$(MAKE) build
 	@$(MAKE) flash DEVICE="$(DEVICE)"
+
+# ── QEMU boot tests ───────────────────────────────────────────────────────────
+#
+# These targets are intended for x86/x86_64 host machines where QEMU can use
+# hardware acceleration (KVM on Linux, HVF on Intel Mac).
+# On Apple Silicon the same commands work but emulation will be slow (TCG only).
+
+QEMU        := qemu-system-x86_64
+QEMU_COMMON := -m 1024 -drive file=build/retrostick.img,format=raw,if=ide \
+               -boot order=c -no-reboot
+
+# Detect KVM availability
+QEMU_ACCEL  := $(shell [ -w /dev/kvm ] && echo "-accel kvm" || echo "")
+
+# EDK2 x86_64 UEFI firmware — check common paths
+OVMF        := $(firstword $(wildcard \
+    /usr/share/OVMF/OVMF_CODE.fd \
+    /usr/share/ovmf/OVMF.fd \
+    /opt/homebrew/share/qemu/edk2-x86_64-code.fd \
+    /usr/share/edk2/ovmf/OVMF_CODE.fd))
+
+qemu-bios:
+	@test -f build/retrostick.img || { echo "Run 'make build' first."; exit 1; }
+	$(QEMU) $(QEMU_COMMON) $(QEMU_ACCEL)
+
+qemu-efi:
+	@test -f build/retrostick.img || { echo "Run 'make build' first."; exit 1; }
+	@test -n "$(OVMF)" || { echo "OVMF firmware not found. Install: apt install ovmf / brew install qemu"; exit 1; }
+	@cp $(OVMF) /tmp/ovmf-vars.fd
+	$(QEMU) $(QEMU_COMMON) $(QEMU_ACCEL) \
+	    -drive if=pflash,format=raw,readonly=on,file=$(OVMF) \
+	    -drive if=pflash,format=raw,file=/tmp/ovmf-vars.fd
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 

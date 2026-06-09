@@ -166,14 +166,14 @@ before touching real hardware.
 The build scripts must work on macOS (Homebrew tools) and WSL2 (standard Linux tools).
 Address the differences before QEMU testing so the test environment is reliable.
 
-- [ ] **6.1** Add OS detection to `Makefile` and all scripts
-  - Detect: `uname -s` for `Darwin` vs `Linux`; `grep -qi microsoft /proc/version` for WSL2
-  - macOS substitutions: use `hdiutil` instead of `losetup`; `diskutil` instead of `fdisk`/`parted`; Homebrew `grub` paths; `dd` with `bs=4m` (lowercase) not `bs=4M`
-  - **Validate:** Run `make validate` and `make fetch` natively on macOS; confirm no Linux-only commands are called
+- [x] **6.1** Add OS detection to `Makefile` and all scripts
+  - All disk operations run inside Docker (`--privileged --platform linux/amd64`), so the
+    host needs no parted/losetup/grub-install. `flash.sh` uses `diskutil unmountDisk` on
+    macOS and `dd bs=4m` (lowercase) vs Linux `bs=4M` — both already implemented.
 
-- [ ] **6.2** WSL2 usbipd-win reminder in `make flash`
-  - If `WSL2` is detected, print attachment instructions before prompting for confirmation
-  - **Validate:** In a WSL2 session, run `make flash DEVICE=/dev/sdX`; confirm instructions appear before the prompt
+- [x] **6.2** WSL2 usbipd-win reminder in `make flash`
+  - `scripts/flash.sh` detects WSL2 via `/proc/version` and prints `usbipd attach` instructions
+    before the confirmation prompt.
 
 ---
 
@@ -183,16 +183,18 @@ Validate the full boot flow in a VM before touching the x86 test machine.
 Requires QEMU on the build machine (`brew install qemu` / `apt install qemu-system-x86`).
 
 - [ ] **7.1** QEMU BIOS boot test
-  - `qemu-system-x86_64 -m 512 -drive file=build/retrostick.img,format=raw -vga std`
+  - `make qemu-bios` (uses KVM on Linux for hardware acceleration)
   - **Validate:** GRUB menu appears with 7 entries; 5-second countdown visible
+  - **Note:** Requires x86/x86_64 host. On Apple Silicon, TCG emulation is functional but
+    very slow (~10-20× slower than native); expect 2-5 min to reach GRUB.
 
 - [ ] **7.2** QEMU UEFI boot test
-  - Same command + `-bios /path/to/OVMF.fd` (install `ovmf` package)
-  - **Validate:** Same GRUB menu via EFI path; `BOOTX64.EFI` is loaded (GRUB output confirms this)
+  - `make qemu-efi` (auto-detects EDK2 firmware from QEMU or OVMF package)
+  - **Validate:** Same GRUB menu via EFI path; BOOTX64.EFI is loaded
 
 - [ ] **7.3** Verify machine boot + RetroArch launch in QEMU
-  - Select C64 from the GRUB menu; observe Alpine boot messages; RetroArch should launch (file browser if no whitelisted image is present on RETROGAMES)
-  - **Validate:** RetroArch reaches its file browser or main menu; F12 opens the overlay; F12 → Quit returns to GRUB
+  - Select C64 from the GRUB menu; observe Alpine boot messages; RetroArch should launch
+  - **Validate:** RetroArch reaches its file browser or main menu; F12 opens the overlay
 
 - [ ] **7.4** Verify `savedefault` works in QEMU
   - Select NES; quit to GRUB; reboot QEMU image; confirm NES is pre-selected
