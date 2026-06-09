@@ -249,7 +249,12 @@ Polish pass before calling it done.
   - Requires a RetroArch quit hook or wrapper script that captures the last played path from RetroArch's content history playlist (`$HOME/.config/retroarch/content_history.lpl`) and writes it to `.last_content`
   - **Validate:** Play a game, quit to GRUB, reboot to same machine — game resumes without file browser
 
-- [ ] **9.5** `RETROGAMES` partition is accessible from macOS/Windows without rebuilding
+- [ ] **9.5** Protect saves and states across reflash
+  - `make flash` currently overwrites the entire stick, destroying saves, save states, and any in-game disk writes on RETROGAMES
+  - Investigate options: e.g. backup/restore RETROGAMES automatically around flash, or only rewrite RETROBOOT/RETROROOT partitions and leave RETROGAMES untouched (requires per-partition dd rather than full image flash), or add a `make backup-saves` / `make restore-saves` helper that syncs `machines/` off the stick before/after
+  - **Validate:** Reflash without losing saves
+
+- [ ] **9.6** `RETROGAMES` partition is accessible from macOS/Windows without rebuilding
   - Mount the RETROGAMES partition from the finished USB on macOS (Finder) and on Windows (File Explorer)
   - **Validate:** Can copy a disk image file to `machines/c64/disks/` from macOS and from Windows; reboot USB; new image appears in RetroArch file browser
 
