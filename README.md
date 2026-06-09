@@ -51,6 +51,10 @@ UEFI → GRUB EFI (BOOTX64.EFI)        Legacy BIOS → GRUB BIOS (embedded in P1
 
 All disk operations (partitioning, GRUB install, SquashFS) run inside Docker containers, so the host needs very little.
 
+**Required on all platforms:**
+- [Docker](https://www.docker.com/products/docker-desktop/) — used for all image build steps
+- `make`, `curl` — build orchestration and asset downloads
+
 ### macOS
 
 ```bash
