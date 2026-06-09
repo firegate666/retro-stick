@@ -80,7 +80,6 @@ build:
 # ── Flash ─────────────────────────────────────────────────────────────────────
 
 flash:
-	@test -n "$(DEVICE)" || { echo "Usage: make flash DEVICE=/dev/sdX"; exit 1; }
 	@bash scripts/flash.sh "$(DEVICE)"
 
 build-and-flash:
