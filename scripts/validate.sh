@@ -64,10 +64,14 @@ check_tool() {
     fi
 }
 
-check_tool docker     docker        docker.io
-check_tool curl       curl          curl
-check_tool unzip      unzip         unzip
-# sevenzip (Homebrew) installs 7zz; p7zip (Linux) installs 7z — accept either
+# Docker handles all disk/image operations (partitioning, GRUB, SquashFS).
+# Only these tools are needed on the host:
+check_tool docker  docker       docker.io
+check_tool curl    curl         curl
+check_tool unzip   unzip        unzip
+
+# sevenzip (Homebrew) installs 7zz; p7zip (Linux) installs 7z
+# Required by fetch_retroarch.sh — RetroArch ships as a .7z archive
 if command -v 7zz &>/dev/null || command -v 7z &>/dev/null; then
     ok "7z / 7zz ($(command -v 7zz 2>/dev/null || command -v 7z))"
 else
@@ -76,29 +80,6 @@ else
     else
         warn "7z not found — apt install p7zip-full"
     fi
-fi
-check_tool mksquashfs squashfs      squashfs-tools
-check_tool dd         "(built-in)"  "(built-in)"
-check_tool mtools     mtools        mtools
-
-# grub-mkimage: name varies by platform
-# Linux: grub-mkimage or grub2-mkimage
-# macOS (x86_64-elf-grub): x86_64-elf-grub-mkimage
-if command -v grub-mkimage &>/dev/null \
-   || command -v grub2-mkimage &>/dev/null \
-   || command -v x86_64-elf-grub-mkimage &>/dev/null; then
-    ok "grub-mkimage"
-else
-    if [[ "$OS" == "Darwin" ]]; then
-        warn "grub-mkimage not found — brew install x86_64-elf-grub"
-    else
-        warn "grub-mkimage not found — apt install grub-pc-bin grub-efi-amd64-bin"
-    fi
-fi
-
-# syslinux only relevant on Linux
-if [[ "$OS" != "Darwin" ]]; then
-    check_tool syslinux syslinux syslinux
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────

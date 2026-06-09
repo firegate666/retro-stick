@@ -52,14 +52,16 @@ UEFI → GRUB EFI (BOOTX64.EFI)        Legacy BIOS → GRUB BIOS (embedded in P1
 All disk operations (partitioning, GRUB install, SquashFS) run inside Docker containers, so the host needs very little.
 
 **Required on all platforms:**
-- [Docker](https://www.docker.com/products/docker-desktop/) — used for all image build steps
-- `make`, `curl` — build orchestration and asset downloads
+- [Docker](https://www.docker.com/products/docker-desktop/) — used for all image build steps (partitioning, GRUB, SquashFS). No disk tools needed on the host.
+- `git` — to clone this repository
+- `make`, `curl`, `unzip` — build orchestration and asset downloads
+- `7z` / `7zz` — to unpack the RetroArch `.7z` archive during `make fetch`
 
 ### macOS
 
 ```bash
 # Homebrew (https://brew.sh) must be installed
-brew install make curl
+brew install make curl sevenzip
 # Docker Desktop: https://www.docker.com/products/docker-desktop/
 ```
 
@@ -67,7 +69,7 @@ brew install make curl
 
 ```bash
 sudo apt update
-sudo apt install make curl unzip docker.io
+sudo apt install make curl unzip p7zip-full docker.io
 sudo usermod -aG docker $USER   # log out and back in after this
 ```
 

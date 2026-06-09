@@ -159,6 +159,20 @@ mkdir -p "$REPO_ROOT/cache/alpine"
 cp "$ROOTFS/boot/vmlinuz-lts"   "$REPO_ROOT/cache/alpine/vmlinuz-lts"
 cp "$ROOTFS/boot/initramfs-lts" "$REPO_ROOT/cache/alpine/initramfs-lts"
 
+# ── Pack SquashFS ─────────────────────────────────────────────────────────────
+
+SFS="$REPO_ROOT/build/retroroot.sfs"
+
+echo "Packing SquashFS (this may take several minutes)..."
+docker run --rm --platform linux/amd64 \
+    -v "$ROOTFS:/rootfs:ro" \
+    -v "$REPO_ROOT/build:/build" \
+    alpine:latest sh -euc '
+        apk add --no-cache squashfs-tools >/dev/null 2>&1
+        rm -f /build/retroroot.sfs
+        mksquashfs /rootfs /build/retroroot.sfs -comp xz -noappend
+    '
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo ""
@@ -166,6 +180,7 @@ echo "=== Rootfs build complete ==="
 echo "  Kernel:    cache/alpine/vmlinuz-lts    ($(du -sh "$REPO_ROOT/cache/alpine/vmlinuz-lts" | cut -f1))"
 echo "  Initramfs: cache/alpine/initramfs-lts  ($(du -sh "$REPO_ROOT/cache/alpine/initramfs-lts" | cut -f1))"
 echo "  Rootfs:    build/rootfs/               ($(du -sh "$ROOTFS" | cut -f1))"
+echo "  SquashFS:  build/retroroot.sfs         ($(du -sh "$SFS" | cut -f1))"
 echo ""
 echo "Cores in rootfs:"
 ls -1 "$ROOTFS/opt/retroarch/cores/"
