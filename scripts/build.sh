@@ -81,12 +81,14 @@ docker run --rm --privileged --platform linux/amd64 \
 
         mkdir -p /mnt/games/machines
 
-        # Copy machine.cfg for each machine (init script uses it at boot)
+        # Copy machine.cfg and core.cfg for each machine (init script uses them at boot)
         for cfg in /machines/*/machine.cfg; do
             machine=$(basename "$(dirname "$cfg")")
             [ "$machine" = "_template" ] && continue
             mkdir -p "/mnt/games/machines/$machine"
             cp "$cfg" "/mnt/games/machines/$machine/machine.cfg"
+            [ -f "/machines/$machine/core.cfg" ] && \
+                cp "/machines/$machine/core.cfg" "/mnt/games/machines/$machine/core.cfg"
         done
 
         umount /mnt/games

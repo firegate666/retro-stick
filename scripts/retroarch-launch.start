@@ -4,7 +4,13 @@
 #
 # Reads machine= from the kernel cmdline (set by GRUB per menu entry),
 # mounts the RETROGAMES exFAT partition, then launches RetroArch with the
-# base config plus the machine-specific overlay from RETROGAMES.
+# correct libretro core so the machine starts directly — no RetroArch menu.
+# F12 opens the RetroArch overlay during play.
+#
+# Content selection:
+#   - If a .last_content file exists (written on previous quit), resume it.
+#   - Else if exactly one disk image is in disks/, load it.
+#   - Else boot the core with no content (C64/DOS: BASIC/prompt; others: file browser).
 #
 # When RetroArch exits (F12 → Quit), the system reboots so GRUB reappears.
 
@@ -37,23 +43,58 @@ for dir in disks saves states system; do
     mkdir -p "/media/RETROGAMES/machines/$MACHINE/$dir"
 done
 
-# ── Build RetroArch config args ───────────────────────────────────────────────
+# ── Resolve libretro core ─────────────────────────────────────────────────────
+
+CORE_CFG="/media/RETROGAMES/machines/$MACHINE/core.cfg"
+CORE_SO=""
+
+if [ -f "$CORE_CFG" ]; then
+    CORE_NAME=$(grep '^CORE_NAME=' "$CORE_CFG" | cut -d= -f2)
+    CANDIDATE="/opt/retroarch/cores/${CORE_NAME}.so"
+    if [ -f "$CANDIDATE" ]; then
+        CORE_SO="$CANDIDATE"
+    else
+        echo "WARNING: core $CANDIDATE not found — RetroArch will open without a core"
+    fi
+else
+    echo "WARNING: no core.cfg for machine=$MACHINE — RetroArch will open without a core"
+fi
+
+# ── Resolve content ───────────────────────────────────────────────────────────
+
+DISKS_DIR="/media/RETROGAMES/machines/$MACHINE/disks"
+LAST_FILE="/media/RETROGAMES/machines/$MACHINE/.last_content"
+CONTENT=""
+
+if [ -f "$LAST_FILE" ]; then
+    LAST=$(cat "$LAST_FILE")
+    [ -f "$LAST" ] && CONTENT="$LAST"
+fi
+
+if [ -z "$CONTENT" ]; then
+    COUNT=$(find "$DISKS_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)
+    if [ "$COUNT" -eq 1 ]; then
+        CONTENT=$(find "$DISKS_DIR" -maxdepth 1 -type f)
+    fi
+fi
+
+# ── Build launch args ─────────────────────────────────────────────────────────
 
 BASE_CFG=/opt/retroarch/retroarch.cfg
 MACHINE_CFG="/media/RETROGAMES/machines/$MACHINE/machine.cfg"
 
-CONFIG_ARGS="--config $BASE_CFG"
-if [ -f "$MACHINE_CFG" ]; then
-    CONFIG_ARGS="$CONFIG_ARGS --appendconfig $MACHINE_CFG"
-fi
+ARGS="--config $BASE_CFG"
+[ -f "$MACHINE_CFG" ] && ARGS="$ARGS --appendconfig $MACHINE_CFG"
+[ -n "$CORE_SO"  ]    && ARGS="$ARGS --libretro $CORE_SO"
+[ -n "$CONTENT"  ]    && ARGS="$ARGS $CONTENT"
 
 # ── Launch RetroArch on the KMS/DRM framebuffer ───────────────────────────────
 
 export SDL_VIDEODRIVER=kmsdrm
 export HOME="/media/RETROGAMES/machines/$MACHINE"
 
-echo "RetroStick: launching retroarch $CONFIG_ARGS"
-retroarch $CONFIG_ARGS || true
+echo "RetroStick: launching retroarch $ARGS"
+retroarch $ARGS || true
 
 # ── Reboot returns the user to the GRUB machine selector ─────────────────────
 
