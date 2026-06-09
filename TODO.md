@@ -244,7 +244,12 @@ Polish pass before calling it done.
   - If any step fails (non-zero exit), loop devices are detached and partial `build/` artifacts are removed
   - **Validate:** Introduce a deliberate failure mid-build (e.g. corrupt a core file); confirm no dangling loop devices (`losetup -l`) and `build/` is clean after the failed run
 
-- [ ] **9.4** `RETROGAMES` partition is accessible from macOS/Windows without rebuilding
+- [ ] **9.4** Resume last played content on reboot
+  - Write `.last_content` to `/media/RETROGAMES/machines/<name>/` when RetroArch quits, so the init script can auto-load it on next boot
+  - Requires a RetroArch quit hook or wrapper script that captures the last played path from RetroArch's content history playlist (`$HOME/.config/retroarch/content_history.lpl`) and writes it to `.last_content`
+  - **Validate:** Play a game, quit to GRUB, reboot to same machine — game resumes without file browser
+
+- [ ] **9.5** `RETROGAMES` partition is accessible from macOS/Windows without rebuilding
   - Mount the RETROGAMES partition from the finished USB on macOS (Finder) and on Windows (File Explorer)
   - **Validate:** Can copy a disk image file to `machines/c64/disks/` from macOS and from Windows; reboot USB; new image appears in RetroArch file browser
 

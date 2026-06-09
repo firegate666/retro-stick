@@ -131,15 +131,25 @@ Maniac Mansion (1987).d64
 
 Disk images are gitignored — the whitelist is the only thing committed.
 
-### 5 — Build the image
+### 5 — Build the Linux root filesystem
 
-Produces `build/retrostick.img` (~4 GB). Requires Docker running.
+Builds the Alpine Linux root (RetroArch, cores, init script) and packages it as a SquashFS image at `build/retroroot.sfs`. This step takes a few minutes and requires Docker running.
+
+```bash
+make build-root
+```
+
+Only needs to be re-run when you change machine configs, update RetroArch, or modify the init script. Safe to skip if `build/retroroot.sfs` already exists and nothing has changed.
+
+### 6 — Build the USB image
+
+Produces `build/retrostick.img` (~4 GB). Requires Docker running and `build/retroroot.sfs` from the previous step.
 
 ```bash
 make build
 ```
 
-### 6 — Flash to USB
+### 7 — Flash to USB
 
 #### macOS
 
@@ -176,7 +186,7 @@ make flash
 
 The Makefile will print the `usbipd` instructions automatically if it detects WSL2 and no device is accessible.
 
-### 7 — Done
+### 8 — Done
 
 Eject the USB stick and insert it into any x86-64 PC. Set USB as the first boot device in BIOS/UEFI and power on. The GRUB menu appears after ~3 seconds.
 
