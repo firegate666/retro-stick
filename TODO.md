@@ -12,32 +12,32 @@ Phase 8 is the first physical USB test.
 Pure file creation, no tooling required. Gets the repo into a consistent state
 that matches `TECH.md` and gives all later phases a clean base.
 
-- [ ] **0.1** Create full directory tree matching `TECH.md` + `.gitignore`
+- [x] **0.1** Create full directory tree matching `TECH.md` + `.gitignore`
   - Dirs: `config/`, `machines/{c64,nes,snes,gb,gba,amiga,dos,_template}/disks/`, `boot/grub/`, `boot/syslinux/`, `scripts/`, `cache/retroarch/`, `cache/cores/`, `build/`
   - `.gitignore`: `cache/`, `build/`, `machines/*/disks/*`, `!machines/*/disks/.gitkeep`
   - **Validate:** `find . -not -path './.git*' | sort` matches the tree in `TECH.md`; `git status` shows only tracked files
 
-- [ ] **0.2** Add `LICENSE` (GPL v3)
+- [x] **0.2** Add `LICENSE` (GPL v3)
   - Standard GPLv3 text, no extension on filename
   - **Validate:** `head -3 LICENSE` shows `GNU GENERAL PUBLIC LICENSE` + `Version 3`
 
-- [ ] **0.3** Write `config/retroarch_base.cfg`
+- [x] **0.3** Write `config/retroarch_base.cfg`
   - All universal hotkeys from `TECH.md`: F12 = menu toggle, F11 = fullscreen, F8 = screenshot, Select+Start = menu toggle (gamepad)
   - Shared video/audio defaults (vsync on, audio driver auto, video driver gl)
   - **Validate:** Open file; confirm all 8 hotkey entries are present
 
-- [ ] **0.4** Write machine configs for all 7 initial machines + `_template`
+- [x] **0.4** Write machine configs for all 7 initial machines + `_template`
   - Each machine needs: `core.cfg` (CORE_NAME + CORE_URL), `machine.cfg` (RetroArch overrides using correct paths under `/media/RETROGAMES/machines/<name>/`), `whitelist.txt` (header comment + one placeholder entry commented out), `disks/.gitkeep`
   - Machines: `c64`, `nes`, `snes`, `gb`, `gba`, `amiga`, `dos` — cores per the table in `TECH.md`
   - `_template`: same structure but with `CORE_NAME=` and `CORE_URL=` left blank
   - **Validate:** `ls machines/` shows 8 entries; each has all 4 files; no `disks/` dir is empty (`.gitkeep` present)
 
-- [ ] **0.5** Write `boot/grub/grub.cfg`
+- [x] **0.5** Write `boot/grub/grub.cfg`
   - One `menuentry` per machine; `set default=saved` + `savedefault`; 5s timeout
   - Each entry: loads kernel from RETROBOOT, passes `root=LABEL=RETROROOT rootfstype=squashfs ro machine=<name>` on cmdline, loads initrd
   - **Validate:** `grub-script-check boot/grub/grub.cfg` exits 0 (install `grub2-common` or run in WSL2 if on macOS)
 
-- [ ] **0.6** Write `boot/syslinux/` legacy BIOS config
+- [x] **0.6** Write `boot/syslinux/` legacy BIOS config
   - `syslinux.cfg`: default entry chainloads to GRUB; no timeout (GRUB handles it)
   - **Validate:** File is present and parseable (no syntax tool required — just review it)
 
@@ -47,12 +47,12 @@ that matches `TECH.md` and gives all later phases a clean base.
 
 First thing you can actually run. Every later phase gates on `make validate` passing.
 
-- [ ] **1.1** Write `scripts/validate.sh`
+- [x] **1.1** Write `scripts/validate.sh`
   - Checks: each machine has `core.cfg`, `machine.cfg`, `whitelist.txt`; `CORE_NAME` and `CORE_URL` are non-empty in every `core.cfg` (skip `_template`); required host tools are available (`curl`, `unzip`, `mksquashfs`, `grub-mkimage` or `grub2-mkimage`, `mtools`, `dd`)
   - Exits non-zero with a clear message on first failure
   - **Validate:** `bash scripts/validate.sh` passes; then intentionally blank `CORE_NAME` in one `core.cfg` and confirm it fails with a useful message; revert
 
-- [ ] **1.2** Write `Makefile` — initial targets: `help`, `list-machines`, `validate`, `clean`, `clean-cache`
+- [x] **1.2** Write `Makefile` — initial targets: `help`, `list-machines`, `validate`, `clean`, `clean-cache`
   - `list-machines`: scans `machines/*/core.cfg`, prints name + core name
   - `validate`: calls `scripts/validate.sh`
   - `clean`: removes `build/`
@@ -60,7 +60,7 @@ First thing you can actually run. Every later phase gates on `make validate` pas
   - `help`: prints all targets with one-line descriptions
   - **Validate:** `make help` prints usage; `make list-machines` shows all 7 machines; `make validate` passes
 
-- [ ] **1.3** Add `add-machine` target to `Makefile`
+- [x] **1.3** Add `add-machine` target to `Makefile`
   - Copies `machines/_template/` to `machines/$(NAME)/`; fails with a message if `NAME` is not set or already exists
   - **Validate:** `make add-machine NAME=testmachine` creates the correct structure; `make list-machines` now shows 8 (with blank core name); `make validate` fails with a clear message pointing at `testmachine`; `rm -rf machines/testmachine` to clean up
 
@@ -70,19 +70,19 @@ First thing you can actually run. Every later phase gates on `make validate` pas
 
 Downloads RetroArch and all libretro cores to `cache/`. Must be idempotent.
 
-- [ ] **2.1** Write `scripts/fetch_retroarch.sh`
+- [x] **2.1** Write `scripts/fetch_retroarch.sh`
   - Downloads the RetroArch x86-64 AppImage from the official nightly to `cache/retroarch/RetroArch.AppImage`
   - Skips download if file already exists and is non-zero size
   - Makes the AppImage executable after download
   - **Validate:** `bash scripts/fetch_retroarch.sh`; confirm `cache/retroarch/RetroArch.AppImage` exists and is executable; run again and confirm it prints "already cached" (or similar) and exits without re-downloading
 
-- [ ] **2.2** Write `scripts/fetch_cores.sh`
+- [x] **2.2** Write `scripts/fetch_cores.sh`
   - Iterates `machines/*/core.cfg`, reads `CORE_URL`, downloads to `cache/cores/<CORE_NAME>.so.zip`, unzips the `.so`
   - Skips machines where `CORE_URL` is empty (covers `_template`)
   - Skips if `.so` already exists
   - **Validate:** `bash scripts/fetch_cores.sh`; confirm 7 `.so` files in `cache/cores/`; run again and confirm all are skipped
 
-- [ ] **2.3** Add `fetch` target to `Makefile` (calls both scripts sequentially)
+- [x] **2.3** Add `fetch` target to `Makefile` (calls both scripts sequentially)
   - **Validate:** Delete `cache/` contents; `make fetch`; confirm RetroArch AppImage + 7 cores present; `make fetch` again with no output except "already cached" lines
 
 ---
@@ -91,7 +91,7 @@ Downloads RetroArch and all libretro cores to `cache/`. Must be idempotent.
 
 Isolated script with no USB or image dependencies. Easy to unit-test with dummy files.
 
-- [ ] **3.1** Write `scripts/apply_whitelist.sh`
+- [x] **3.1** Write `scripts/apply_whitelist.sh`
   - Args: `<machine-name> <source-disks-dir> <dest-dir>`
   - Reads `machines/<machine-name>/whitelist.txt`; skips blank lines and `#` comments; copies only matching files from source to dest; prints a warning for each whitelisted filename that has no matching file in source
   - **Validate:** Create a temp dir with 3 fake files; put 2 in a `whitelist.txt`; run the script; confirm only the 2 whitelisted files appear in dest and a warning is printed for any missing entry; clean up temp dir
@@ -104,13 +104,13 @@ This is the most complex phase. Build it incrementally; each sub-step is testabl
 before moving to the next. The result is a SquashFS image that boots Alpine Linux
 and auto-launches RetroArch with the correct machine config.
 
-- [ ] **4.1** Download Alpine Linux mini root filesystem
+- [x] **4.1** Download Alpine Linux mini root filesystem
   - Alpine minirootfs (x86-64) + kernel + initramfs from dl-cdn.alpinelinux.org
   - Store to `cache/alpine/`
   - Add a `fetch-alpine` Makefile target; integrate into `make fetch`
   - **Validate:** `cache/alpine/` contains the rootfs tarball, a kernel (`vmlinuz-lts`) and initramfs (`initramfs-lts`)
 
-- [ ] **4.2** Write `scripts/build_root.sh` — stage 1: bootstrap the rootfs
+- [x] **4.2** Write `scripts/build_root.sh` — stage 1: bootstrap the rootfs
   - Extracts Alpine minirootfs to `build/rootfs/`
   - Runs `apk add` inside a chroot (or `fakechroot`/`proot` on macOS) to install: `fbset`, `util-linux`, `eudev` (udev for device nodes), `libdrm`
   - Copies `cache/retroarch/RetroArch.AppImage` to `build/rootfs/opt/retroarch/RetroArch.AppImage`
@@ -118,13 +118,13 @@ and auto-launches RetroArch with the correct machine config.
   - Copies `config/retroarch_base.cfg` to `build/rootfs/opt/retroarch/retroarch.cfg`
   - **Validate:** After running the script, `ls build/rootfs/opt/retroarch/` shows the AppImage + `cores/` dir with 7 `.so` files
 
-- [ ] **4.3** Write the Alpine launcher init script
+- [x] **4.3** Write the Alpine launcher init script
   - Path inside rootfs: `build/rootfs/etc/local.d/retroarch-launch.start`
   - Logic: read `machine=` from `/proc/cmdline`; mount `LABEL=RETROGAMES` at `/media/RETROGAMES`; merge machine-specific config from `/media/RETROGAMES/machines/<machine>/` on top of base config; exec `RetroArch.AppImage` with `--config` pointing to the merged config
   - Set up `rc-update add local default` so the script runs at boot
   - **Validate:** Read the script and trace the logic manually; check that `chmod +x` is set
 
-- [ ] **4.4** Package rootfs into SquashFS
+- [x] **4.4** Package rootfs into SquashFS
   - `mksquashfs build/rootfs/ build/retroroot.sfs -comp xz -noappend`
   - **Validate:** `unsquashfs -l build/retroroot.sfs | grep RetroArch` shows the AppImage path; `du -sh build/retroroot.sfs` is under 1 GB
 
@@ -135,17 +135,17 @@ and auto-launches RetroArch with the correct machine config.
 Build a raw `.img` file with the correct 3-partition layout. Test with a loop device
 before touching real hardware.
 
-- [ ] **5.1** Write `scripts/partition_usb.sh`
+- [x] **5.1** Write `scripts/partition_usb.sh`
   - Accepts either a block device or an image file path as `$1`
   - Creates a GPT partition table; carves out the 3 partitions per `TECH.md` (RETROBOOT 512 MB FAT32, RETROROOT ~1 GB, RETROGAMES exFAT remainder); formats each; labels them
   - Also writes a protective MBR so Syslinux can install to it
   - **Validate:** Run against a 4 GB sparse image file (`truncate -s 4G build/test.img`); attach as loop device (`losetup -fP` on Linux, `hdiutil` on macOS); confirm 3 partitions with correct labels; detach; `rm build/test.img`
 
-- [ ] **5.2** Write `scripts/install_bootloader.sh`
+- [x] **5.2** Write `scripts/install_bootloader.sh`
   - Installs GRUB EFI to `EFI/BOOT/BOOTX64.EFI` on RETROBOOT; installs GRUB core image for BIOS fallback; installs Syslinux to the MBR; copies `boot/grub/grub.cfg` + kernel + initramfs to RETROBOOT
   - **Validate:** Mount RETROBOOT from the loop device; confirm `EFI/BOOT/BOOTX64.EFI` exists; Syslinux MBR bytes at offset 0 match expected magic (`file` or `xxd` check)
 
-- [ ] **5.3** Write `scripts/build.sh` — main orchestrator
+- [x] **5.3** Write `scripts/build.sh` — main orchestrator
   - Creates a fresh `build/retrostick.img` (sized to hold all content + 10% headroom)
   - Calls `partition_usb.sh`, `install_bootloader.sh`
   - Copies `build/retroroot.sfs` to RETROROOT partition
@@ -153,7 +153,7 @@ before touching real hardware.
   - Prints a summary: image size, machines included, disk images copied per machine
   - **Validate:** `bash scripts/build.sh`; `ls -lh build/retrostick.img`; mount all 3 partitions from the image and verify contents match expectations
 
-- [ ] **5.4** Add `build`, `flash`, and `build-and-flash` targets to `Makefile`
+- [x] **5.4** Add `build`, `flash`, and `build-and-flash` targets to `Makefile`
   - `build`: calls `scripts/build.sh`
   - `flash DEVICE=/dev/sdX`: requires `DEVICE` to be set; prompts "Write to $(DEVICE)? [y/N]"; on confirmation runs `dd if=build/retrostick.img of=$(DEVICE) bs=4M status=progress conv=fsync`; detects WSL2 and prints `usbipd-win` instructions if `DEVICE` is not accessible
   - `build-and-flash DEVICE=/dev/sdX`: runs both sequentially
