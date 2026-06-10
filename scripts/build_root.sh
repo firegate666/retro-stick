@@ -55,8 +55,9 @@ docker run -d --platform linux/amd64 --name "$CONTAINER" \
 
 echo "Installing packages..."
 docker exec "$CONTAINER" sh -c "
-    # Add community repo (retroarch lives here)
-    echo 'https://dl-cdn.alpinelinux.org/alpine/latest-stable/community' \
+    # Add community repo pinned to the same version as the base image
+    ALPINE_VER=\$(cut -d. -f1,2 /etc/alpine-release)
+    echo "https://dl-cdn.alpinelinux.org/alpine/v\${ALPINE_VER}/community" \
         >> /etc/apk/repositories
     apk update -q
     apk add --no-cache \
