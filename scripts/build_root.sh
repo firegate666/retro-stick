@@ -28,7 +28,8 @@ fi
 for f in \
     "$REPO_ROOT/cache/cores/"*.so \
     "$REPO_ROOT/config/retroarch_base.cfg" \
-    "$REPO_ROOT/scripts/retroarch-launch.start"
+    "$REPO_ROOT/scripts/retroarch-launch.start" \
+    "$REPO_ROOT/scripts/initramfs-init"
 do
     [[ -f "$f" ]] || { echo "ERROR: required file not found: $f" >&2; exit 1; }
 done
@@ -116,6 +117,20 @@ features=\"ata base ide scsi usb virtio squashfs nvme\"
 CONF
     mkinitfs \$(ls /lib/modules/ | head -1)
 "
+
+echo "Patching initramfs with custom init..."
+docker cp "$REPO_ROOT/scripts/initramfs-init" "$CONTAINER:/tmp/retrostick-init"
+docker exec "$CONTAINER" sh -c '
+    set -e
+    mkdir -p /tmp/initrd_work
+    cd /tmp/initrd_work
+    zcat /boot/initramfs-lts | cpio -id > /dev/null 2>&1
+    cp /tmp/retrostick-init init
+    chmod 755 init
+    find . | cpio -o -H newc 2>/dev/null | gzip -9 > /boot/initramfs-lts
+    cd /
+    rm -rf /tmp/initrd_work /tmp/retrostick-init
+'
 
 echo "Cleaning apk cache..."
 docker exec "$CONTAINER" sh -c "rm -rf /var/cache/apk/* /tmp/*"
