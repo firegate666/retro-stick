@@ -4,29 +4,28 @@ set -euo pipefail
 # Builds build/retrostick.img — a complete, flashable USB image.
 #
 # Requires all Phase 2-4 outputs:
-#   cache/retroarch/RetroArch.AppImage  (unused at build time, in rootfs)
 #   cache/cores/*.so                    (in rootfs)
 #   cache/alpine/vmlinuz-lts
 #   cache/alpine/initramfs-lts
-#   build/retroroot.sfs
+#   build/rootfs/                       (Alpine rootfs from build_root.sh)
 #
 # Set IMG_MB to override the default 4096 MiB image size.
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 IMG="$REPO_ROOT/build/retrostick.img"
-SFS="$REPO_ROOT/build/retroroot.sfs"
+ROOTFS="$REPO_ROOT/build/rootfs"
 
 : "${IMG_MB:=4096}"   # 4 GiB default; USB must be at least this large
 
 # ── Pre-flight ────────────────────────────────────────────────────────────────
 
 for f in \
-    "$SFS" \
     "$REPO_ROOT/cache/alpine/vmlinuz-lts" \
     "$REPO_ROOT/cache/alpine/initramfs-lts"
 do
     [[ -f "$f" ]] || { echo "ERROR: missing required file: $f" >&2; exit 1; }
 done
+[[ -d "$ROOTFS" ]] || { echo "ERROR: build/rootfs/ not found — run make build-root first" >&2; exit 1; }
 
 if ! command -v docker &>/dev/null; then
     echo "ERROR: docker not found." >&2; exit 1
@@ -43,18 +42,21 @@ dd if=/dev/zero of="$IMG" bs=1M count=0 seek="$IMG_MB" 2>/dev/null
 
 bash "$REPO_ROOT/scripts/partition_usb.sh" "$IMG"
 
-# ── 3. Write RETROROOT (raw SquashFS) ─────────────────────────────────────────
+# ── 3. Populate RETROROOT (ext4) ──────────────────────────────────────────────
 
-echo "Writing RETROROOT SquashFS..."
+echo "Populating RETROROOT ext4..."
 docker run --rm --privileged --platform linux/amd64 \
     -v "$IMG:/disk" \
-    -v "$SFS:/retroroot.sfs:ro" \
+    -v "$ROOTFS:/rootfs:ro" \
     alpine:latest sh -euc '
-        apk add --no-cache util-linux kpartx >/dev/null 2>&1
+        apk add --no-cache util-linux kpartx rsync >/dev/null 2>&1
         LOOP=$(losetup -f --show /disk)
         kpartx -as "$LOOP"
         LOOPNAME=$(basename "$LOOP")
-        dd if=/retroroot.sfs of="/dev/mapper/${LOOPNAME}p3" bs=4M
+        mkdir -p /mnt/root
+        mount "/dev/mapper/${LOOPNAME}p3" /mnt/root
+        rsync -a /rootfs/ /mnt/root/
+        umount /mnt/root
         kpartx -ds "$LOOP"
         losetup -d "$LOOP"
     '

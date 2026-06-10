@@ -10,7 +10,7 @@ set -euo pipefail
 # Resulting layout (1 MiB aligned):
 #   Partition 1  BIOSBOOT       1 MiB   raw    (GRUB BIOS embedding gap)
 #   Partition 2  RETROBOOT    512 MiB   FAT32  (EFI System Partition + kernel)
-#   Partition 3  RETROROOT   1536 MiB   raw    (SquashFS written directly)
+#   Partition 3  RETROROOT   3072 MiB   ext4   (Alpine rootfs, label RETROROOT)
 #   Partition 4  RETROGAMES  remainder  exFAT  (disk images, saves)
 
 TARGET="$(cd "$(dirname "${1:?Usage: $0 <image-or-device>}")" && pwd)/$(basename "$1")"
@@ -24,7 +24,7 @@ echo "Partitioning: $TARGET"
 docker run --rm --privileged --platform linux/amd64 \
     -v "$TARGET:/disk" \
     alpine:latest sh -euc '
-        apk add --no-cache parted dosfstools exfatprogs util-linux kpartx >/dev/null 2>&1
+        apk add --no-cache parted dosfstools exfatprogs e2fsprogs util-linux kpartx >/dev/null 2>&1
 
         # Partition table
         parted -s /disk mklabel gpt
@@ -33,8 +33,8 @@ docker run --rm --privileged --platform linux/amd64 \
         parted -s /disk mkpart RETROBOOT fat32  2MiB  514MiB    # EFI + kernel
         parted -s /disk set 2 esp on
         parted -s /disk set 2 legacy_boot on
-        parted -s /disk mkpart RETROROOT        514MiB 2050MiB  # SquashFS
-        parted -s /disk mkpart RETROGAMES       2050MiB 100%    # exFAT games
+        parted -s /disk mkpart RETROROOT        514MiB 3586MiB  # ext4 rootfs (~3 GiB)
+        parted -s /disk mkpart RETROGAMES       3586MiB 100%    # exFAT games
         parted -s /disk print
 
         # Attach loop device and create partition mappings via kpartx
@@ -43,11 +43,9 @@ docker run --rm --privileged --platform linux/amd64 \
         kpartx -as "$LOOP"
         LOOPNAME=$(basename "$LOOP")
 
-        # Format RETROBOOT (FAT32) and RETROGAMES (exFAT)
-        # BIOSBOOT is left raw (GRUB embeds core.img here).
-        # RETROROOT is left raw (SquashFS image is written directly to it).
-        mkfs.fat  -F32 -n RETROBOOT "/dev/mapper/${LOOPNAME}p2"
-        mkfs.exfat -n   RETROGAMES  "/dev/mapper/${LOOPNAME}p4"
+        mkfs.fat  -F32 -n RETROBOOT  "/dev/mapper/${LOOPNAME}p2"
+        mkfs.ext4 -L   RETROROOT     "/dev/mapper/${LOOPNAME}p3"
+        mkfs.exfat -n  RETROGAMES    "/dev/mapper/${LOOPNAME}p4"
 
         kpartx -ds "$LOOP"
         losetup -d "$LOOP"
