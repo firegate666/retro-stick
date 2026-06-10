@@ -4,7 +4,7 @@ set -euo pipefail
 # Builds the Alpine x86-64 rootfs that lives on the RETROROOT SquashFS partition.
 #
 # Requires Docker (linux/amd64 emulation — works on Apple Silicon via Rosetta).
-# Uses alpine:latest; pin ALPINE_IMAGE in the environment to lock a version.
+# Uses alpine:3.20; override with ALPINE_IMAGE env var to use a different version.
 #
 # Outputs:
 #   build/rootfs/          — full filesystem tree
@@ -15,7 +15,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ROOTFS="$REPO_ROOT/build/rootfs"
 CONTAINER="retrostick-rootfs-$$"
 
-: "${ALPINE_IMAGE:=alpine:latest}"
+: "${ALPINE_IMAGE:=alpine:3.20}"
 
 # ── Pre-flight ────────────────────────────────────────────────────────────────
 

@@ -65,7 +65,7 @@ fetch-cores:
 	@bash scripts/fetch_cores.sh
 
 fetch-alpine:
-	docker pull --platform linux/amd64 alpine:latest
+	docker pull --platform linux/amd64 alpine:3.20
 
 # ── Rootfs ────────────────────────────────────────────────────────────────────
 
