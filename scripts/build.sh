@@ -55,7 +55,7 @@ docker run --rm --privileged --platform linux/amd64 \
         LOOPNAME=$(basename "$LOOP")
         mkdir -p /mnt/root
         mount "/dev/mapper/${LOOPNAME}p3" /mnt/root
-        rsync -a /rootfs/ /mnt/root/; rc=$?; [ $rc -eq 0 ] || [ $rc -eq 24 ] || exit $rc
+        rsync -a /rootfs/ /mnt/root/ || { rc=$?; [ "$rc" -eq 24 ]; }
         umount /mnt/root
         kpartx -ds "$LOOP"
         losetup -d "$LOOP"
