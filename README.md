@@ -135,17 +135,17 @@ Disk images are gitignored — the whitelist is the only thing committed.
 
 ### 5 — Build the Linux root filesystem
 
-Builds the Alpine Linux root (RetroArch, cores, init script) and packages it as a SquashFS image at `build/retroroot.sfs`. This step takes a few minutes and requires Docker running.
+Builds the Alpine Linux root filesystem (RetroArch, cores, kernel) into `build/rootfs/`. This step takes a few minutes and requires Docker running.
 
 ```bash
 make build-root
 ```
 
-Only needs to be re-run when you change machine configs, update RetroArch, or modify the init script. Safe to skip if `build/retroroot.sfs` already exists and nothing has changed.
+Only needs to be re-run when you change machine configs, update RetroArch, or update the Alpine base. Safe to skip if `build/rootfs/` already exists and nothing has changed.
 
 ### 6 — Build the USB image
 
-Produces `build/retrostick.img` (~4 GB). Requires Docker running and `build/retroroot.sfs` from the previous step.
+Produces `build/retrostick.img` (~4 GB). Requires Docker running and `build/rootfs/` from the previous step.
 
 ```bash
 make build

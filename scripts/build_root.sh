@@ -109,9 +109,9 @@ docker exec "$CONTAINER" sh -c "
 
 echo "Configuring initramfs..."
 docker exec "$CONTAINER" sh -c "
-    # Minimal feature set: USB boot + SquashFS root mount + NVMe/SATA/IDE
+    # Minimal feature set: USB boot + ext4 root mount + NVMe/SATA/IDE
     cat > /etc/mkinitfs/mkinitfs.conf << 'CONF'
-features=\"ata base ide scsi usb virtio squashfs nvme\"
+features=\"ata base ext4 ide scsi usb virtio nvme\"
 CONF
     mkinitfs \$(ls /lib/modules/ | head -1)
 "
