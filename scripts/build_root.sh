@@ -67,6 +67,10 @@ docker exec "$CONTAINER" sh -c "
         openrc \
         linux-lts \
         retroarch \
+        mesa-dri-gallium \
+        mesa-gbm \
+        mesa-egl \
+        libdrm \
         exfatprogs \
         eudev \
         udev-init-scripts \

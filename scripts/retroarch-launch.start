@@ -14,7 +14,7 @@
 #
 # When RetroArch exits (F12 → Quit), the system reboots so GRUB reappears.
 
-set -e
+set +e
 
 # ── Machine name from kernel cmdline ─────────────────────────────────────────
 
@@ -89,14 +89,53 @@ ARGS="--config $BASE_CFG"
 [ -n "$CONTENT"  ]    && ARGS="$ARGS $CONTENT"
 
 # ── Launch RetroArch on the KMS/DRM framebuffer ───────────────────────────────
+#
+# Everything from here on writes to /dev/console explicitly — OpenRC's
+# local service swallows stdout, so without this redirect we'd be blind.
+
+exec >/dev/console 2>&1
 
 export SDL_VIDEODRIVER=kmsdrm
 export HOME="/media/RETROGAMES/machines/$MACHINE"
 
-echo "RetroStick: launching retroarch $ARGS"
-retroarch $ARGS || true
+echo ""
+echo "=================================================="
+echo "RetroStick diagnostics"
+echo "=================================================="
+echo "PATH:        $PATH"
+echo "retroarch:   $(which retroarch 2>/dev/null || echo MISSING)"
+echo "/dev/dri:    $(ls /dev/dri 2>/dev/null || echo MISSING)"
+echo "/dev/fb*:    $(ls /dev/fb* 2>/dev/null || echo MISSING)"
+echo "Loaded GPU modules:"
+lsmod | grep -E 'i915|amdgpu|radeon|nouveau' || echo "  (none — KMS may not be available)"
+echo ""
+echo "Linked libraries (missing):"
+ldd "$(which retroarch)" 2>&1 | grep -E 'not found|=>' | head -40
+echo ""
+echo "=================================================="
+echo "Step 1: retroarch --version (no display required)"
+echo "=================================================="
+retroarch --version
+RC1=$?
+echo "  → exit code: $RC1"
 
-# ── Reboot returns the user to the GRUB machine selector ─────────────────────
+if [ "$RC1" -ne 0 ]; then
+    echo ""
+    echo "retroarch --version failed — binary is broken or libs missing."
+    echo "Skipping graphical launch attempt."
+else
+    echo ""
+    echo "=================================================="
+    echo "Step 2: retroarch with full args (graphical launch)"
+    echo "=================================================="
+    echo "ARGS: $ARGS"
+    retroarch $ARGS
+    RC2=$?
+    echo "  → exit code: $RC2"
+fi
 
-echo "RetroStick: RetroArch exited — rebooting to machine selector"
-/sbin/reboot
+echo ""
+echo "=================================================="
+echo "Dropping to shell. Press Ctrl+D to reboot."
+echo "=================================================="
+exec /bin/sh </dev/console >/dev/console 2>&1
