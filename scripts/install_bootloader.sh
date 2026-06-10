@@ -70,7 +70,7 @@ GCFG
             --output=/mnt/boot/EFI/BOOT/BOOTX64.EFI \
             --prefix=/boot/grub \
             --config=/tmp/grub-early.cfg \
-            part_gpt fat normal search search_label linux echo configfile
+            part_gpt fat normal search search_label linux echo configfile loadenv
 
         # ── GRUB BIOS (legacy path) ───────────────────────────────────────────
         # grub-install embeds core.img in the BIOSBOOT partition (P1, bios_grub)
