@@ -60,6 +60,8 @@ docker exec "$CONTAINER" sh -c "
     echo "https://dl-cdn.alpinelinux.org/alpine/v\${ALPINE_VER}/community" \
         >> /etc/apk/repositories
     apk update -q
+    # GTK post-install triggers (pulled in by retroarch) fail in a headless
+    # container environment — ignore the exit code and verify manually below.
     apk add --no-cache \
         alpine-base \
         openrc \
@@ -69,7 +71,9 @@ docker exec "$CONTAINER" sh -c "
         eudev \
         udev-init-scripts \
         util-linux \
-        kbd
+        kbd || true
+    command -v retroarch  || { echo 'ERROR: retroarch failed to install'; exit 1; }
+    test -d /lib/modules  || { echo 'ERROR: linux-lts failed to install'; exit 1; }
 "
 
 # ── Trim firmware: keep GPU-only, regenerate minimal initramfs ────────────────
