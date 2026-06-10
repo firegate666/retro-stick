@@ -124,10 +124,28 @@ docker exec "$CONTAINER" sh -c '
     set -e
     mkdir -p /tmp/initrd_work
     cd /tmp/initrd_work
-    zcat /boot/initramfs-lts | cpio -id > /dev/null 2>&1
+
+    # Extract — Alpine 3.x uses gzip; decompress then unpack cpio
+    INITRD=/boot/initramfs-lts
+    echo "  initramfs size: $(wc -c < $INITRD) bytes"
+    if zcat "$INITRD" > /tmp/initrd_raw.cpio 2>/dev/null; then
+        echo "  format: gzip"
+    else
+        echo "  format: raw cpio"
+        cp "$INITRD" /tmp/initrd_raw.cpio
+    fi
+    cpio -id < /tmp/initrd_raw.cpio
+    rm -f /tmp/initrd_raw.cpio
+
+    echo "  extracted $(find . | wc -l) entries"
+    ls -la init 2>/dev/null || echo "  WARNING: no init found in original"
+
     cp /tmp/retrostick-init init
     chmod 755 init
-    find . | cpio -o -H newc 2>/dev/null | gzip -9 > /boot/initramfs-lts
+    echo "  installed custom init ($(wc -c < init) bytes)"
+
+    find . | cpio -o -H newc 2>/dev/null | gzip -9 > "$INITRD"
+    echo "  repacked initramfs: $(wc -c < $INITRD) bytes"
     cd /
     rm -rf /tmp/initrd_work /tmp/retrostick-init
 '

@@ -1,12 +1,6 @@
 #!/bin/sh
 # RetroStick initramfs /init
-#
-# Replaces Alpine's default init. Finds the RETROROOT SquashFS partition
-# by filesystem type (blkid -t TYPE=squashfs) rather than by label or UUID,
-# since SquashFS has no filesystem label or UUID support.
-#
-# machine= is read from the kernel cmdline by retroarch-launch.start after
-# switch_root — we just pass the cmdline through unchanged.
+set -x
 
 mount -t proc     proc     /proc
 mount -t sysfs    sysfs    /sys
