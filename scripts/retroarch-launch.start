@@ -23,9 +23,15 @@ MACHINE=${MACHINE:-c64}
 
 echo "RetroStick: machine=$MACHINE"
 
-# ── Wait briefly for udev to finish settling devices ─────────────────────────
+# ── Re-trigger udev to ensure GPU/input drivers are autoloaded ───────────────
+#
+# The early udev-trigger in sysinit can miss devices on slower USB-boot
+# machines, leaving GPU drivers unloaded (only simpledrm bound). Re-trigger
+# now to force udev to scan every PCI device and autoload missing modules.
 
-sleep 2
+udevadm trigger --type=devices --action=add 2>/dev/null || true
+udevadm settle --timeout=10 2>/dev/null || true
+sleep 1
 
 # ── Mount RETROGAMES (exFAT, label set by partition_usb.sh) ──────────────────
 

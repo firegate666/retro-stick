@@ -80,36 +80,13 @@ docker exec "$CONTAINER" sh -c "
     test -d /lib/modules  || { echo 'ERROR: linux-lts failed to install'; exit 1; }
 "
 
-# ── Trim firmware: keep GPU-only, regenerate minimal initramfs ────────────────
+# ── Firmware: keep everything ────────────────────────────────────────────────
 #
-# linux-lts pulls in all ~200 linux-firmware packages (~900 MB).
-# We only need GPU firmware for Intel (i915) and AMD (amdgpu/radeon) to get
-# KMS/DRM output on real hardware. Everything else (WiFi, BT, DSP, etc.) is
-# irrelevant for a headless gaming stick.
-#
-# This also makes mkinitfs produce a small initramfs (~10-30 MB instead of
-# 170 MB) because the firmware it can reference is now minimal.
-#
-# NOTE: RETROROOT ends up ~1.5-2 GB; the ext4 partition is 3 GiB with margin.
-# Partition sizing is handled in partition_usb.sh.
-
-echo "Trimming firmware to GPU-only..."
-docker exec "$CONTAINER" sh -c "
-    cd /lib/firmware
-
-    # Stash GPU firmware we want to keep
-    for dir in i915 amdgpu radeon amd nvidia; do
-        [ -d \"\$dir\" ] && mv \"\$dir\" \"/tmp/fw_\$dir\"
-    done
-
-    # Remove everything else
-    rm -rf /lib/firmware/*
-
-    # Restore GPU firmware
-    for dir in i915 amdgpu radeon amd nvidia; do
-        [ -d \"/tmp/fw_\$dir\" ] && mv \"/tmp/fw_\$dir\" \"\$dir\"
-    done
-"
+# This is a portable USB stick intended to boot on arbitrary hardware. We
+# can't know in advance which GPU/WiFi/peripheral firmware will be needed,
+# so we ship the full linux-firmware set (~900 MB). The 3 GiB RETROROOT
+# partition has room. Trimming firmware previously caused boot failures
+# on machines whose drivers needed firmware blobs we removed.
 
 echo "Configuring initramfs..."
 docker exec "$CONTAINER" sh -c "
