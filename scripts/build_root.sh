@@ -73,6 +73,7 @@ docker exec "$CONTAINER" sh -c "
         libdrm \
         alsa-lib \
         alsa-utils \
+        gcompat \
         exfatprogs \
         eudev \
         udev-init-scripts \

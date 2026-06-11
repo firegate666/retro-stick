@@ -103,6 +103,12 @@ exec >/dev/console 2>&1
 
 export HOME="/media/RETROGAMES/machines/$MACHINE"
 
+# RetroArch's kms video driver requires XDG_RUNTIME_DIR. We're not under
+# a login manager, so create one in tmpfs and point everything at it.
+export XDG_RUNTIME_DIR="/run/retrostick"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
 echo ""
 echo "=================================================="
 echo "RetroStick diagnostics"
