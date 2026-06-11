@@ -71,6 +71,8 @@ docker exec "$CONTAINER" sh -c "
         mesa-gbm \
         mesa-egl \
         libdrm \
+        alsa-lib \
+        alsa-utils \
         exfatprogs \
         eudev \
         udev-init-scripts \

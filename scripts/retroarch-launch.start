@@ -101,7 +101,6 @@ ARGS="--config $BASE_CFG"
 
 exec >/dev/console 2>&1
 
-export SDL_VIDEODRIVER=kmsdrm
 export HOME="/media/RETROGAMES/machines/$MACHINE"
 
 echo ""
